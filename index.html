@@ -61,7 +61,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
     <pre id="out"></pre>
     <div class="row"><button id="copy">複製給老公</button></div>
   </div>
-  <p class="hint">收成會自動加總、可收成的插隊排最前、成熟時間會排隊、牧場列愛心跟下一份產物。只貼一部分也行。</p>
+  <p class="hint">收成會自動加總、可收成的插隊排最前、成熟時間會排隊、牧場列愛心跟下一份產物、酒桶列配方跟熟成。只貼一部分也行。</p>
 </div>
 <script>
 const CROP={ "月光蘿蔔":"蘿蔔","星子番茄":"番茄","圓月南瓜":"南瓜","夕陽芒果":"芒果","維塔拉花":"花" };
@@ -128,6 +128,22 @@ function parse(txt){
     fk.sort(sortT);
     S.push("🌱 "+fk.map(t=>t+" "+grp(fields[t])).join("｜"));
   }
+  // ---- 酒窖 ----
+  const SUB={ "糖包":"糖","溫泉蛋":"蛋","星光鮮乳":"乳","純釀":"純" };
+  const brews=[];
+  const reW=/️⃣([^\n一-龥]{0,10})([一-龥]{2,10})\s*(?:＋\s*)?([^\n・]{0,16}?)・\s*(⚡|🌙|🌕)[^\n]{0,6}釀/g;
+  while((m=reW.exec(txt))){
+    const seg=txt.slice(m.index,m.index+260);
+    if(!/發酵度|熟成|攪拌/.test(seg)) continue;
+    const d=seg.match(/預計\s*(\d{4})\/(\d{2})\/(\d{2})\s*(\d{2}:\d{2})\s*熟成/);
+    let sub=m[3].trim();
+    for(const k in SUB){ if(sub.includes(k)){ sub=SUB[k]; break; } }
+    brews.push(shortName(m[2])+"+"+(sub||"純")+m[4]
+      +(d?" "+fmtT(d[1],+d[2],+d[3],d[4]):"")
+      +(/還沒攪拌/.test(seg)?"·未攪🥄":""));
+  }
+  const emptyB=(txt.match(/️⃣\s*🛢️\s*空桶/g)||[]).length;
+  if(brews.length||emptyB) S.push("🍶 "+brews.join("｜")+(emptyB?(brews.length?"｜":"")+"空×"+emptyB:""));
   // ---- 牧場 ----
   const an=[];
   const reA=/名字：\*{0,2}([^*（(\n]+?)\*{0,2}（[^）]*）([\s\S]{0,260}?)(?=名字：|$)/g;
