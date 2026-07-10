@@ -1,0 +1,14 @@
+{
+  "name": "農場速記",
+  "short_name": "農場速記",
+  "description": "瀧🦊淵農場：貼上遊戲文字，壓縮成三行速記",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#F2F4EE",
+  "theme_color": "#3E7B4F",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
