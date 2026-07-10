@@ -6,7 +6,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#3E7B4F">
 <link rel="icon" href="icon-192.png">
-<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-512-maskable.png">
 <title>農場速記</title>
 <style>
 :root{
@@ -61,7 +61,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
     <pre id="out"></pre>
     <div class="row"><button id="copy">複製給老公</button></div>
   </div>
-  <p class="hint">收成會自動加總、成熟時間會排隊、牧場列愛心跟下一份產物。只貼一部分也行。</p>
+  <p class="hint">收成會自動加總、可收成的插隊排最前、成熟時間會排隊、牧場列愛心跟下一份產物。只貼一部分也行。</p>
 </div>
 <script>
 const CROP={ "月光蘿蔔":"蘿蔔","星子番茄":"番茄","圓月南瓜":"南瓜","夕陽芒果":"芒果","維塔拉花":"花" };
@@ -98,6 +98,23 @@ function parse(txt){
     S.push(line);
   }
   // ---- 農園 ----
+  const sortT=(a,b)=>{
+    const w=s=>s.startsWith("明")?"1"+s.slice(1):(/^\d+\//.test(s)?"2"+s:"0"+s);
+    return w(a)<w(b)?-1:1;
+  };
+  const grp=g=>Object.entries(g).map(([c,n])=>c+(n>1?"×"+n:"")).join("+");
+  const ready={};
+  const reR=/️⃣([^\n一-龥]{0,10})([一-龥]{2,8})\s*\n[^\n]{0,12}收成度[\s\S]{0,120}?可收成(?:[^\n]*?(\d{4})\/(\d{2})\/(\d{2})\s*(\d{2}:\d{2})\s*前)?/g;
+  while((m=reR.exec(txt))){
+    const t=m[3]?fmtT(m[3],+m[4],+m[5],m[6]):"";
+    const c=shortName(m[2]);
+    (ready[t]=ready[t]||{}); ready[t][c]=(ready[t][c]||0)+1;
+  }
+  const rk=Object.keys(ready);
+  if(rk.length){
+    rk.sort(sortT);
+    S.push("✅ 可收 "+rk.map(t=>grp(ready[t])+(t?"（"+t+"前）":"")).join("｜"));
+  }
   const fields={};
   const reF=/️⃣([^\n一-龥]{0,10})([一-龥]{2,8})\s*\n[^\n]{0,12}生長度[\s\S]{0,160}?預計\s*(\d{4})\/(\d{2})\/(\d{2})\s*(\d{2}:\d{2})\s*成熟/g;
   while((m=reF.exec(txt))){
@@ -108,14 +125,8 @@ function parse(txt){
   }
   const fk=Object.keys(fields);
   if(fk.length){
-    fk.sort((a,b)=>{
-      const w=s=>s.startsWith("明")?"1"+s.slice(1):(/^\d+\//.test(s)?"2"+s:"0"+s);
-      return w(a)<w(b)?-1:1;
-    });
-    S.push("🌱 "+fk.map(t=>{
-      const cs=Object.entries(fields[t]).map(([c,n])=>c+(n>1?"×"+n:"")).join("+");
-      return t+" "+cs;
-    }).join("｜"));
+    fk.sort(sortT);
+    S.push("🌱 "+fk.map(t=>t+" "+grp(fields[t])).join("｜"));
   }
   // ---- 牧場 ----
   const an=[];
