@@ -144,6 +144,26 @@ function parse(txt){
   }
   const emptyB=(txt.match(/️⃣\s*🛢️\s*空桶/g)||[]).length;
   if(brews.length||emptyB) S.push("🍶 "+brews.join("｜")+(emptyB?(brews.length?"｜":"")+"空×"+emptyB:""));
+  // ---- 品評（開瓶戰報）----
+  const revs=[];
+  const reP=/🏅[^\n]*?(\d+)\s*分[^\n]*?(粗釀|良品|極品|傳世)([\s\S]{0,420}?)(?=🏅|$)/g;
+  while((m=reP.exec(txt))){
+    const seg=m[3];
+    const named=/酒譜翻開新的一頁/.test(seg);
+    const wname=named?((seg.match(/🍾\s*([^\n（(]+)/)||[])[1]||"").trim():"";
+    const rc=(seg.match(/[（(][^：:\n]*[：:]([^）)\n]+)[）)]/)||[])[1]||"";
+    const base=shortName((rc.match(/[一-龥]{2,10}/)||[])[0]||"?");
+    let sub=(rc.match(/＋\s*([^・\n]+?)・/)||[])[1]||"純";
+    sub=sub.trim(); let hit=false;
+    for(const k in SUB){ if(sub.includes(k)){ sub=SUB[k]; hit=true; break; } }
+    if(!hit) sub=shortName((sub.match(/[一-龥]{2,10}/)||[])[0]||sub);
+    const per=/陳釀/.test(rc)?"🌕":(/慢釀/.test(rc)?"🌙":"⚡");
+    const pei=(seg.match(/配方\s*(\d+)/)||[])[1];
+    const price=(seg.match(/估價\s*([\d,]+)/)||[])[1];
+    revs.push((named?"📜"+wname+"! ":"")+base+"+"+sub+per+" "+m[1]+m[2][0]
+      +(pei?"(方"+pei+")":"")+(price?price+"元":""));
+  }
+  if(revs.length) S.push("🏅 "+revs.join("｜"));
   // ---- 牧場 ----
   const an=[];
   const reA=/名字：\*{0,2}([^*（(\n]+?)\*{0,2}（[^）]*）([\s\S]{0,260}?)(?=名字：|$)/g;
