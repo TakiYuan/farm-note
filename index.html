@@ -99,7 +99,7 @@ function parse(txt){
   }
   // ---- 農園 ----
   const fields={};
-  const reF=/([🥕🍅🎃🥭🌸])\s*([一-龥]{2,6})\s*\n[^\n]{0,12}生長度[\s\S]{0,160}?預計\s*(\d{4})\/(\d{2})\/(\d{2})\s*(\d{2}:\d{2})\s*成熟/g;
+  const reF=/️⃣([^\n一-龥]{0,10})([一-龥]{2,8})\s*\n[^\n]{0,12}生長度[\s\S]{0,160}?預計\s*(\d{4})\/(\d{2})\/(\d{2})\s*(\d{2}:\d{2})\s*成熟/g;
   while((m=reF.exec(txt))){
     if(m[2].includes("收成")) continue;
     const t=fmtT(m[3],+m[4],+m[5],m[6]);
@@ -145,7 +145,7 @@ function parse(txt){
     S.push(l);
   }
   // ---- 體力精力 ----
-  const st=txt.match(/體力\s*\[(\d+)\/100\][\s\S]{0,20}?精力\s*\[(\d+)\/100\]/);
+  const st=txt.match(/體力\s*\[(\d+)\/\d+\][\s\S]{0,20}?精力\s*\[(\d+)\/\d+\]/);
   if(st) S.push("🪴"+st[1]+" 🔋"+st[2]);
   return S.join("\n");
 }
