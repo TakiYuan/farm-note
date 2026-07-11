@@ -181,7 +181,8 @@ function parse(txt){
     if(hungry) piece+="🥺沒餵";
     an.push(piece);
   }
-  if(an.length) S.push("🐮 "+an.join("｜"));
+  const fed=txt.match(/吃飽的狀態管到\s*(\d{4})\/(\d{2})\/(\d{2})\s*(\d{2}:\d{2})/);
+  if(an.length) S.push("🐮 "+an.join("｜")+(fed?"｜🍽️餵到"+fmtT(fed[1],+fed[2],+fed[3],fed[4]):""));
   // ---- 錢包／簽到 ----
   const money=txt.match(/存款\s*\*{0,2}([\d,]+)\*{0,2}\s*維塔拉幣/);
   const sign=txt.match(/連續簽到\s*\*{0,2}(\d+)\*{0,2}\s*天/);
