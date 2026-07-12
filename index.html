@@ -128,6 +128,19 @@ function parse(txt){
     fk.sort(sortT);
     S.push("🌱 "+fk.map(t=>t+" "+grp(fields[t])).join("｜"));
   }
+  // ---- 牧場收成 ----
+  const PROD2={ "溫泉蛋":"蛋","星光鮮乳":"乳","雲絨毛線":"線","神聖火":"火" };
+  const rc=[];
+  const reC=/([一-龥]{2,6})\s*×\s*(\d+)\s*((?:（[^）]*）){1,2})/g;
+  while((m=reC.exec(txt))){
+    const parens=[...m[3].matchAll(/（([^）]*)）/g)].map(x=>x[1]);
+    const animal=parens.find(p=>/^[一-龥]{1,6}$/.test(p));
+    if(!animal) continue;
+    const qual=parens.find(p=>/💎|✨/.test(p));
+    rc.push((PROD2[m[1]]||m[1])+"×"+m[2]
+      +(qual?"("+qual.replace(/[、！\s×]/g,"")+")":""));
+  }
+  if(rc.length) S.push("🧺🐮 "+rc.join("｜"));
   // ---- 酒窖 ----
   const SUB={ "糖包":"糖","溫泉蛋":"蛋","星光鮮乳":"乳","純釀":"純" };
   const brews=[];
