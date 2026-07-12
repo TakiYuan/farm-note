@@ -1,0 +1,47 @@
+# 淵播電台排程車——這份要放到 farm-note 倉庫的 .github/workflows/radio.yml
+# （farm-note 是公開倉庫，Actions 分鐘數免費；本檔只是範本存放處，放在這裡不會跑）
+#
+# 瀧的安裝三步：
+#   1. farm-note → Settings → Secrets and variables → Actions → New repository secret
+#      名稱 DISCORD_WEBHOOK，值＝淵播電台 webhook 網址
+#   2. 同上再加一個 YUAN_TOKEN，值＝能讀寫 Yuan 倉庫的 PAT（跟 FARM_NOTE_TOKEN 同一條就行）
+#   3. farm-note → Add file → 路徑打 .github/workflows/radio.yml → 貼上本檔全文 → Commit
+
+name: yuanfm-radio
+on:
+  schedule:
+    - cron: "7,22,37,52 * * * *"
+  workflow_dispatch:
+    inputs:
+      lookahead_min:
+        description: "值班分鐘數（救援長途班用；留空＝75，上限約 340）"
+        required: false
+        default: "75"
+
+concurrency:
+  group: radio
+  cancel-in-progress: false
+
+jobs:
+  broadcast:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 取告示板（Yuan 私人倉庫 radio 分支）
+        uses: actions/checkout@v4
+        with:
+          repository: TakiYuan/Yuan
+          ref: radio
+          token: ${{ secrets.YUAN_TOKEN }}
+
+      - name: 發送到點的廣播
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          LOOKAHEAD_MIN: ${{ github.event.inputs.lookahead_min || '75' }}
+        run: python3 dispatch.py
+
+      - name: 蓋已發章推回告示板
+        run: |
+          git config user.name "yuanfm-radio"
+          git config user.email "radio@yuanfm"
+          git add sent.json reminders.json
+          git diff --cached --quiet || { git commit -m "已發章＋打掃"; git pull --rebase origin radio; git push; }
