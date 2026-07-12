@@ -38,4 +38,4 @@ jobs:
           git config user.name "yuanfm-radio"
           git config user.email "radio@yuanfm"
           git add sent.json reminders.json
-          git diff --cached --quiet || { git commit -m "已發章＋打掃"; git push; }
+          git diff --cached --quiet || { git commit -m "已發章＋打掃"; git pull --rebase origin radio; git push; }
