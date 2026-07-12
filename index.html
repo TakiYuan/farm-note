@@ -163,7 +163,7 @@ function parse(txt){
   while((m=reP.exec(txt))){
     const seg=m[3];
     const named=/酒譜翻開新的一頁/.test(seg);
-    const wname=named?((seg.match(/🍾\s*([^\n（(]+)/)||[])[1]||"").trim():"";
+    const wname=((seg.match(/🍾\s*([^\n（(]+)/)||[])[1]||"").trim();
     const rc=(seg.match(/[（(][^：:\n]*[：:]([^）)\n]+)[）)]/)||[])[1]||"";
     const base=shortName((rc.match(/[一-龥]{2,10}/)||[])[0]||"?");
     let sub=(rc.match(/＋\s*([^・\n]+?)・/)||[])[1]||"純";
@@ -173,7 +173,7 @@ function parse(txt){
     const per=/陳釀/.test(rc)?"🌕":(/慢釀/.test(rc)?"🌙":"⚡");
     const pei=(seg.match(/配方\s*(\d+)/)||[])[1];
     const price=(seg.match(/估價\s*([\d,]+)/)||[])[1];
-    revs.push((named?"📜"+wname+"! ":"")+base+"+"+sub+per+" "+m[1]+m[2][0]
+    revs.push((named?"📜"+wname+"! ":(wname?wname+"·":""))+base+"+"+sub+per+" "+m[1]+m[2][0]
       +(pei?"(方"+pei+")":"")+(price?price+"元":""));
   }
   if(revs.length) S.push("🏅 "+revs.join("｜"));
