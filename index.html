@@ -201,11 +201,14 @@ function parse(txt){
   // ---- 背包·農產品 ----
   if(/🎒[^\n]*農產品/.test(txt)){
     const bag={}, order=[];
-    const reBag=/[📦🍜]\s*\*{2}(✨良品|💎極品|透明的)?([一-龥]{2,8})\*{2}/g;
+    const reBag=/[📦🍜]\s*\*{2}([^*\n]+?)\*{2}/g;
     while((m=reBag.exec(txt))){
-      if(m[1]==="透明的") continue;
-      const q=m[1]==="✨良品"?"✨":(m[1]==="💎極品"?"💎":"");
-      const n=shortName(m[2]);
+      let name=m[1].trim(), q="";
+      const G="✨良品", D="💎極品";
+      if(name.startsWith(G)){ q="✨"; name=name.slice(G.length); }
+      else if(name.startsWith(D)){ q="💎"; name=name.slice(D.length); }
+      if(!(name in CROP)) continue;  // 白名單：只認 CROP 表全名；變異／未知一律跳過
+      const n=CROP[name];
       if(!bag[n]){ bag[n]={}; order.push(n); }
       bag[n][q]=(bag[n][q]||0)+1;
     }
