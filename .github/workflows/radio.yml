@@ -22,6 +22,9 @@ concurrency:
   group: radio
   cancel-in-progress: false
 
+permissions:
+  contents: write
+
 jobs:
   broadcast:
     runs-on: ubuntu-latest
@@ -45,3 +48,22 @@ jobs:
           git config user.email "radio@yuanfm"
           git add sent.json reminders.json
           git diff --cached --quiet || { git commit -m "已發章＋打掃"; git pull --rebase origin radio; git push; }
+
+      - name: 倉庫保溫（防 60 天無活動排程被 GitHub 休眠）
+        uses: actions/checkout@v4
+        with:
+          path: homebase
+
+      - name: 保溫章（40 天沒 commit 就蓋一顆空章重置倒數）
+        run: |
+          cd homebase
+          last=$(git log -1 --format=%ct)
+          age_days=$(( ( $(date +%s) - last ) / 86400 ))
+          if [ "$age_days" -ge 40 ]; then
+            git config user.name "yuanfm-radio"
+            git config user.email "radio@yuanfm"
+            git commit --allow-empty -m "keepalive：倉庫保溫章（${age_days} 天無更新，重置排程休眠倒數）"
+            git push
+          else
+            echo "倉庫還熱著（${age_days} 天前有動靜），不用蓋"
+          fi
