@@ -166,7 +166,9 @@ function parse(txt){
     let wname=((seg.match(/🍾\s*([^\n（(]+)/)||[])[1]||"").trim();
     if(!wname) wname=((seg.match(/(?:^|\n)\s*([^\n（(]{1,20}?)（\s*[^：:\n]*號桶/)||[])[1]||"").trim();
     const rc=(seg.match(/[（(][^：:\n]*[：:]([^）)\n]+)[）)]/)||[])[1]||"";
-    const base=shortName((rc.match(/[一-龥]{2,10}/)||[])[0]||"?");
+    let base=shortName((rc.match(/[一-龥]{2,10}/)||[])[0]||"?");
+    if(base.startsWith("良品")) base="✨"+base.slice(2);
+    else if(base.startsWith("極品")) base="💎"+base.slice(2);
     let sub=(rc.match(/＋\s*([^・\n]+?)・/)||[])[1]||"純";
     sub=sub.trim(); let hit=false;
     for(const k in SUB){ if(sub.includes(k)){ sub=SUB[k]; hit=true; break; } }
