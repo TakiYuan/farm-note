@@ -170,9 +170,14 @@ function parse(txt){
     if(base.startsWith("良品")) base="✨"+base.slice(2);
     else if(base.startsWith("極品")) base="💎"+base.slice(2);
     let sub=(rc.match(/＋\s*([^・\n]+?)・/)||[])[1]||"純";
-    sub=sub.trim(); let hit=false;
+    sub=sub.trim();
+    let subQ="";
+    if(sub.startsWith("良品")){ subQ="✨"; sub=sub.slice(2); }
+    else if(sub.startsWith("極品")){ subQ="💎"; sub=sub.slice(2); }
+    let hit=false;
     for(const k in SUB){ if(sub.includes(k)){ sub=SUB[k]; hit=true; break; } }
     if(!hit) sub=shortName((sub.match(/[一-龥]{2,10}/)||[])[0]||sub);
+    sub=subQ+sub;
     const per=/陳釀/.test(rc)?"🌕":(/慢釀/.test(rc)?"🌙":"⚡");
     const pei=(seg.match(/配方\s*(\d+)/)||[])[1];
     const price=(seg.match(/估價\s*([\d,]+)/)||[])[1];
