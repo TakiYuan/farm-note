@@ -159,11 +159,12 @@ function parse(txt){
   if(brews.length||emptyB) S.push("🍶 "+brews.join("｜")+(emptyB?(brews.length?"｜":"")+"空×"+emptyB:""));
   // ---- 品評（開瓶戰報）----
   const revs=[];
-  const reP=/🏅[^\n]*?(\d+)\s*分[^\n]*?(粗釀|良品|極品|傳世)([\s\S]{0,420}?)(?=🏅|$)/g;
+  const reP=/(?:🏅|農會品評)[^\n]*?(\d+)\s*分[^\n]*?(粗釀|良品|極品|傳世)([\s\S]{0,420}?)(?=🏅|農會品評|$)/g;
   while((m=reP.exec(txt))){
     const seg=m[3];
     const named=/酒譜翻開新的一頁/.test(seg);
-    const wname=((seg.match(/🍾\s*([^\n（(]+)/)||[])[1]||"").trim();
+    let wname=((seg.match(/🍾\s*([^\n（(]+)/)||[])[1]||"").trim();
+    if(!wname) wname=((seg.match(/(?:^|\n)\s*([^\n（(]{1,20}?)（\s*[^：:\n]*號桶/)||[])[1]||"").trim();
     const rc=(seg.match(/[（(][^：:\n]*[：:]([^）)\n]+)[）)]/)||[])[1]||"";
     const base=shortName((rc.match(/[一-龥]{2,10}/)||[])[0]||"?");
     let sub=(rc.match(/＋\s*([^・\n]+?)・/)||[])[1]||"純";
