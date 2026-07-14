@@ -159,7 +159,7 @@ function parse(txt){
   if(brews.length||emptyB) S.push("🍶 "+brews.join("｜")+(emptyB?(brews.length?"｜":"")+"空×"+emptyB:""));
   // ---- 品評（開瓶戰報）----
   const revs=[];
-  const reP=/(?:🏅|農會品評)[^\n]*?(\d+)\s*分[^\n]*?(粗釀|良品|極品|傳世)([\s\S]{0,420}?)(?=🏅|農會品評|$)/g;
+  const reP=/(?:🏅|農會品評)[^\n]*?(\d+)\s*分[^\n]*?(粗釀|良品|極品|傳世)([\s\S]{0,800}?)(?=🏅|農會品評|已入背包|$)/g;
   while((m=reP.exec(txt))){
     const seg=m[3];
     const named=/酒譜翻開新的一頁/.test(seg);
