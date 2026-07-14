@@ -146,8 +146,8 @@ function parse(txt){
     an.push(piece);
   }
   const fed=txt.match(/吃飽的狀態管到\s*(\d{4})\/(\d{2})\/(\d{2})\s*(\d{2}:\d{2})/);
-  const fed2=txt.match(/（(\d{1,2}:\d{2})\s*後可以再餵）/);
-  const fedTxt=fed?"｜🍽️餵到"+fmtT(fed[1],+fed[2],+fed[3],fed[4]):(fed2?"｜🍽️"+fed2[1]+"後可餵":"");
+  const fed2=txt.match(/（(今天|明天)?\s*(\d{1,2}:\d{2})\s*後可以再餵）/);
+  const fedTxt=fed?"｜🍽️餵到"+fmtT(fed[1],+fed[2],+fed[3],fed[4]):(fed2?"｜🍽️"+(fed2[1]==="明天"?"明":"")+fed2[2]+"後可餵":"");
   if(an.length) S.push("🐮 "+an.join("｜")+fedTxt);
   // ---- 牧場收成 ----
   const PROD2={ "溫泉蛋":"蛋","星光鮮乳":"乳","雲絨毛線":"線","神聖火":"火" };
