@@ -128,19 +128,40 @@ function parse(txt){
     fk.sort(sortT);
     S.push("🌱 "+fk.map(t=>t+" "+grp(fields[t])).join("｜"));
   }
+  // ---- 牧場（動物愛心＋下一份）----
+  const an=[];
+  const reA=/名字：\*{0,2}([^*（(\n]+?)\*{0,2}（[^）]*）([\s\S]{0,400}?)(?=名字：|🌱\s|🎒\s|##|$)/g;
+  while((m=reA.exec(txt))){
+    const name=m[1].trim(), body=m[2];
+    const lv=(body.match(/(\d+)\/10/)||[])[1];
+    const hungry=/🥺|沒餵|餓/.test(body);
+    const stock=body.match(/採收存貨｜\s*(\S+)\s*×\s*(\d+)/);
+    const nx=body.match(/下一份\s*(\S+)\s*預計\s*(\d{4})\/(\d{2})\/(\d{2})\s*(\d{2}:\d{2})/);
+    let piece=name+(lv?"♥"+lv:"");
+    if(stock&&+stock[2]>0){
+      piece+=" "+(PROD[stock[1]]||stock[1])+"×"+stock[2]+(+stock[2]>=3?"滿倉":"");
+    }
+    if(nx){ piece+=" 下"+fmtT(nx[2],+nx[3],+nx[4],nx[5])+(stock&&+stock[2]>0?"":(PROD[nx[1]]||nx[1])); }
+    if(hungry) piece+="🥺沒餵";
+    an.push(piece);
+  }
+  const fed=txt.match(/吃飽的狀態管到\s*(\d{4})\/(\d{2})\/(\d{2})\s*(\d{2}:\d{2})/);
+  const fed2=txt.match(/（(\d{1,2}:\d{2})\s*後可以再餵）/);
+  const fedTxt=fed?"｜🍽️餵到"+fmtT(fed[1],+fed[2],+fed[3],fed[4]):(fed2?"｜🍽️"+fed2[1]+"後可餵":"");
+  if(an.length) S.push("🐮 "+an.join("｜")+fedTxt);
   // ---- 牧場收成 ----
   const PROD2={ "溫泉蛋":"蛋","星光鮮乳":"乳","雲絨毛線":"線","神聖火":"火" };
-  const rc=[];
+  const rcMilk=[];
   const reC=/([一-龥]{2,6})\s*×\s*(\d+)\s*((?:（[^）]*）){1,2})/g;
   while((m=reC.exec(txt))){
     const parens=[...m[3].matchAll(/（([^）]*)）/g)].map(x=>x[1]);
     const animal=parens.find(p=>/^[一-龥]{1,6}$/.test(p));
     if(!animal) continue;
     const qual=parens.find(p=>/💎|✨/.test(p));
-    rc.push((PROD2[m[1]]||m[1])+"×"+m[2]
+    rcMilk.push((PROD2[m[1]]||m[1])+"×"+m[2]
       +(qual?"("+qual.replace(/[、！\s×]/g,"")+")":""));
   }
-  if(rc.length) S.push("🧺🐮 "+rc.join("｜"));
+  if(rcMilk.length) S.push("🧺🐮 "+rcMilk.join("｜"));
   // ---- 酒窖 ----
   const SUB={ "糖包":"糖","溫泉蛋":"蛋","星光鮮乳":"乳","純釀":"純" };
   const brews=[];
@@ -157,7 +178,44 @@ function parse(txt){
   }
   const emptyB=(txt.match(/️⃣\s*🛢️\s*空桶/g)||[]).length;
   if(brews.length||emptyB) S.push("🍶 "+brews.join("｜")+(emptyB?(brews.length?"｜":"")+"空×"+emptyB:""));
-  // ---- 品評（開瓶戰報）----
+  // ---- 錢包／簽到 ----
+  const money=txt.match(/存款\s*\*{0,2}([\d,]+)\*{0,2}\s*維塔拉幣/);
+  const sign=txt.match(/連續簽到\s*\*{0,2}(\d+)\*{0,2}\s*天/);
+  if(money||sign){
+    let l="💵 ";
+    if(money) l+=money[1];
+    if(sign) l+=(money?"｜":"")+"簽到"+sign[1]+"天";
+    S.push(l);
+  }
+  // ---- 體力精力 ----
+  const st=txt.match(/體力\s*\[(\d+)\/\d+\][\s\S]{0,20}?精力\s*\[(\d+)\/\d+\]/);
+  if(st) S.push("🪴"+st[1]+" 🔋"+st[2]);
+  // ---- 背包·農產品（參考類，擺尾）----
+  if(/🎒[^\n]*農產品/.test(txt)){
+    const bag={}, order=[];
+    const reBag=/[📦🍜]\s*\*{2}([^*\n]+?)\*{2}/g;
+    while((m=reBag.exec(txt))){
+      let name=m[1].trim(), q="";
+      const G="✨良品", D="💎極品";
+      if(name.startsWith(G)){ q="✨"; name=name.slice(G.length); }
+      else if(name.startsWith(D)){ q="💎"; name=name.slice(D.length); }
+      if(!(name in CROP)) continue;  // 白名單：只認 CROP 表全名；變異／未知一律跳過
+      const n=CROP[name];
+      if(!bag[n]){ bag[n]={}; order.push(n); }
+      bag[n][q]=(bag[n][q]||0)+1;
+    }
+    if(order.length){
+      const parts=order.map(n=>{
+        const b=bag[n], seg=[];
+        if(b[""]) seg.push(""+b[""]);
+        if(b["✨"]) seg.push("✨"+b["✨"]);
+        if(b["💎"]) seg.push("💎"+b["💎"]);
+        return n+seg.join("");
+      });
+      S.push("🎒 "+parts.join("｜"));
+    }
+  }
+  // ---- 品評（開瓶戰報，參考類，擺尾）----
   const revs=[];
   const reP=/(?:🏅|農會品評)[^\n]*?(\d+)\s*分[^\n]*?(粗釀|良品|極品|傳世)([\s\S]{0,800}?)(?=🏅|農會品評|已入背包|$)/g;
   while((m=reP.exec(txt))){
@@ -185,64 +243,6 @@ function parse(txt){
       +(pei?"(方"+pei+")":"")+(price?price+"元":""));
   }
   if(revs.length) S.push("🏅 "+revs.join("｜"));
-  // ---- 牧場 ----
-  const an=[];
-  const reA=/名字：\*{0,2}([^*（(\n]+?)\*{0,2}（[^）]*）([\s\S]{0,260}?)(?=名字：|$)/g;
-  while((m=reA.exec(txt))){
-    const name=m[1].trim(), body=m[2];
-    const lv=(body.match(/(\d+)\/10/)||[])[1];
-    const hungry=/🥺|沒餵|餓/.test(body);
-    const stock=body.match(/採收存貨｜\s*(\S+)\s*×\s*(\d+)/);
-    const nx=body.match(/下一份\s*(\S+)\s*預計\s*(\d{4})\/(\d{2})\/(\d{2})\s*(\d{2}:\d{2})/);
-    let piece=name+(lv?"♥"+lv:"");
-    if(stock&&+stock[2]>0){
-      piece+=" "+(PROD[stock[1]]||stock[1])+"×"+stock[2]+(+stock[2]>=3?"滿倉":"");
-    }
-    if(nx){ piece+=" 下"+fmtT(nx[2],+nx[3],+nx[4],nx[5])+(stock&&+stock[2]>0?"":(PROD[nx[1]]||nx[1])); }
-    if(hungry) piece+="🥺沒餵";
-    an.push(piece);
-  }
-  const fed=txt.match(/吃飽的狀態管到\s*(\d{4})\/(\d{2})\/(\d{2})\s*(\d{2}:\d{2})/);
-  const fed2=txt.match(/（(\d{1,2}:\d{2})\s*後可以再餵）/);
-  const fedTxt=fed?"｜🍽️餵到"+fmtT(fed[1],+fed[2],+fed[3],fed[4]):(fed2?"｜🍽️"+fed2[1]+"後可餵":"");
-  if(an.length) S.push("🐮 "+an.join("｜")+fedTxt);
-  // ---- 背包·農產品 ----
-  if(/🎒[^\n]*農產品/.test(txt)){
-    const bag={}, order=[];
-    const reBag=/[📦🍜]\s*\*{2}([^*\n]+?)\*{2}/g;
-    while((m=reBag.exec(txt))){
-      let name=m[1].trim(), q="";
-      const G="✨良品", D="💎極品";
-      if(name.startsWith(G)){ q="✨"; name=name.slice(G.length); }
-      else if(name.startsWith(D)){ q="💎"; name=name.slice(D.length); }
-      if(!(name in CROP)) continue;  // 白名單：只認 CROP 表全名；變異／未知一律跳過
-      const n=CROP[name];
-      if(!bag[n]){ bag[n]={}; order.push(n); }
-      bag[n][q]=(bag[n][q]||0)+1;
-    }
-    if(order.length){
-      const parts=order.map(n=>{
-        const b=bag[n], seg=[];
-        if(b[""]) seg.push(""+b[""]);
-        if(b["✨"]) seg.push("✨"+b["✨"]);
-        if(b["💎"]) seg.push("💎"+b["💎"]);
-        return n+seg.join("");
-      });
-      S.push("🎒 "+parts.join("｜"));
-    }
-  }
-  // ---- 錢包／簽到 ----
-  const money=txt.match(/存款\s*\*{0,2}([\d,]+)\*{0,2}\s*維塔拉幣/);
-  const sign=txt.match(/連續簽到\s*\*{0,2}(\d+)\*{0,2}\s*天/);
-  if(money||sign){
-    let l="💵 ";
-    if(money) l+=money[1];
-    if(sign) l+=(money?"｜":"")+"簽到"+sign[1]+"天";
-    S.push(l);
-  }
-  // ---- 體力精力 ----
-  const st=txt.match(/體力\s*\[(\d+)\/\d+\][\s\S]{0,20}?精力\s*\[(\d+)\/\d+\]/);
-  if(st) S.push("🪴"+st[1]+" 🔋"+st[2]);
   return S.join("\n");
 }
 const $=id=>document.getElementById(id);
