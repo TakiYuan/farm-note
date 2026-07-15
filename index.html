@@ -219,7 +219,7 @@ function parse(txt){
   const revs=[];
   const reP=/(?:🏅|農會品評)[^\n]*?(\d+)\s*分[^\n]*?(粗釀|良品|極品|傳世)([\s\S]{0,800}?)(?=🏅|農會品評|已入背包|$)/g;
   while((m=reP.exec(txt))){
-    const seg=m[3];
+    const seg=m[3].replace(/\*/g,"");  // 手機複製常帶 md 粗體星號，剝掉避免擋 wname／price
     const named=/酒譜翻開新的一頁/.test(seg);
     let wname=((seg.match(/🍾\s*([^\n（(]+)/)||[])[1]||"").trim();
     if(!wname) wname=((seg.match(/(?:^|\n)\s*([^\n（(]{1,20}?)（\s*[^：:\n]*號桶/)||[])[1]||"").trim();
