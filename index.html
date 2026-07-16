@@ -77,6 +77,7 @@ function fmtT(y,mo,d,hm){
   return (mo|0)+"/"+(d|0)+" "+hm;
 }
 function parse(txt){
+  txt=txt.replace(/\*/g,"");  // 手機複製帶 md 粗體星號，進門先剝，各段不用自己防
   const S=[];
   // ---- 收成 ----
   const hv=[]; let m;
@@ -170,9 +171,17 @@ function parse(txt){
     const seg=txt.slice(m.index,m.index+260);
     if(!/發酵度|熟成|攪拌/.test(seg)) continue;
     const d=seg.match(/預計\s*(\d{4})\/(\d{2})\/(\d{2})\s*(\d{2}:\d{2})\s*熟成/);
-    let sub=m[3].trim();
-    for(const k in SUB){ if(sub.includes(k)){ sub=SUB[k]; break; } }
-    brews.push(shortName(m[2])+"+"+(sub||"純")+m[4]
+    let sub=m[3].trim(), mix=false;
+    if(sub.startsWith("×")){ mix=true; sub=sub.slice(1).trim(); }  // 混釀寫法：×副料（混釀）
+    sub=sub.replace(/（混釀）/,"").trim();
+    let subQ="";
+    const G="✨良品", D="💎極品";
+    if(sub.startsWith(G)){ subQ="✨"; sub=sub.slice(G.length); }
+    else if(sub.startsWith(D)){ subQ="💎"; sub=sub.slice(D.length); }
+    let hit=false;
+    for(const k in SUB){ if(sub.includes(k)){ sub=SUB[k]; hit=true; break; } }
+    if(!hit&&sub) sub=shortName((sub.match(/[一-龥]{2,10}/)||[])[0]||sub);
+    brews.push(shortName(m[2])+(mix?"×":"+")+subQ+(sub||"純")+m[4]
       +(d?" "+fmtT(d[1],+d[2],+d[3],d[4]):"")
       +(/還沒攪拌/.test(seg)?"·未攪🥄":""));
   }
