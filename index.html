@@ -65,6 +65,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 </div>
 <script>
 const CROP={ "月光蘿蔔":"蘿蔔","星子番茄":"番茄","圓月南瓜":"南瓜","夕陽芒果":"芒果","維塔拉花":"花","銀穗稻":"稻","日霜葡萄":"葡萄","月牙梅":"梅" };
+const LIVESTOCK={ "溫泉蛋":"蛋","星光鮮乳":"乳","雲絨毛線":"線","神聖火":"火","培根":"培根" };
 const PROD={ "🥚":"蛋","🥛":"奶","🧶":"線","🥓":"培根","🔥":"火","🪶":"毛" };
 function shortName(n){ n=n.trim(); for(const k in CROP){ if(n.includes(k)) return n.replace(k,CROP[k]); } return n; }
 function fmtT(y,mo,d,hm){
@@ -151,7 +152,6 @@ function parse(txt){
   const fedTxt=fed?"｜🍽️餵到"+fmtT(fed[1],+fed[2],+fed[3],fed[4]):(fed2?"｜🍽️"+(fed2[1]==="明天"?"明":"")+fed2[2]+"後可餵":"");
   if(an.length) S.push("🐮 "+an.join("｜")+fedTxt);
   // ---- 牧場收成 ----
-  const PROD2={ "溫泉蛋":"蛋","星光鮮乳":"乳","雲絨毛線":"線","神聖火":"火" };
   const rcMilk=[];
   const reC=/([一-龥]{2,6})\s*×\s*(\d+)\s*((?:（[^）]*）){1,2})/g;
   while((m=reC.exec(txt))){
@@ -159,7 +159,7 @@ function parse(txt){
     const animal=parens.find(p=>/^[一-龥]{1,6}$/.test(p));
     if(!animal) continue;
     const qual=parens.find(p=>/💎|✨/.test(p));
-    rcMilk.push((PROD2[m[1]]||m[1])+"×"+m[2]
+    rcMilk.push((LIVESTOCK[m[1]]||m[1])+"×"+m[2]
       +(qual?"("+qual.replace(/[、！\s×]/g,"")+")":""));
   }
   if(rcMilk.length) S.push("🧺🐮 "+rcMilk.join("｜"));
@@ -199,31 +199,36 @@ function parse(txt){
   // ---- 體力精力 ----
   const st=txt.match(/體力\s*\[(\d+)\/\d+\][\s\S]{0,20}?精力\s*\[(\d+)\/\d+\]/);
   if(st) S.push("🪴"+st[1]+" 🔋"+st[2]);
-  // ---- 背包·農產品（參考類，擺尾）----
-  if(/🎒[^\n]*農產品/.test(txt)){
-    const bag={}, order=[];
+  // ---- 背包·農產品／畜牧品（參考類，擺尾）----
+  if(/🎒[^\n]*(?:農產品|畜牧品)/.test(txt)){
+    const bagF={}, orderF=[], bagL={}, orderL=[];
     const reBag=/(?:📦|🍜)\s*([^\n｜]+?)(?:\s*×\s*(\d+))?\s*｜/g;
     while((m=reBag.exec(txt))){
       let name=m[1].trim(), q="";
-      const cnt=m[2]?+m[2]:1;  // 同品項堆疊「品名 ×N」
+      const cnt=m[2]?+m[2]:1;
       const G="✨良品", D="💎極品";
       if(name.startsWith(G)){ q="✨"; name=name.slice(G.length); }
       else if(name.startsWith(D)){ q="💎"; name=name.slice(D.length); }
-      if(!(name in CROP)) continue;  // 白名單：只認 CROP 表全名；變異／未知一律跳過
-      const n=CROP[name];
-      if(!bag[n]){ bag[n]={}; order.push(n); }
-      bag[n][q]=(bag[n][q]||0)+cnt;
+      if(name in CROP){
+        const n=CROP[name];
+        if(!bagF[n]){ bagF[n]={}; orderF.push(n); }
+        bagF[n][q]=(bagF[n][q]||0)+cnt;
+      } else if(name in LIVESTOCK){
+        const n=LIVESTOCK[name];
+        if(!bagL[n]){ bagL[n]={}; orderL.push(n); }
+        bagL[n][q]=(bagL[n][q]||0)+cnt;
+      }
+      // 白名單外（變異／未知）一律跳過
     }
-    if(order.length){
-      const parts=order.map(n=>{
-        const b=bag[n], seg=[];
-        if(b[""]) seg.push(""+b[""]);
-        if(b["✨"]) seg.push("✨"+b["✨"]);
-        if(b["💎"]) seg.push("💎"+b["💎"]);
-        return n+seg.join("");
-      });
-      S.push("🎒 "+parts.join("｜"));
-    }
+    const fmt=(order,bag)=>order.map(n=>{
+      const b=bag[n], seg=[];
+      if(b[""]) seg.push(""+b[""]);
+      if(b["✨"]) seg.push("✨"+b["✨"]);
+      if(b["💎"]) seg.push("💎"+b["💎"]);
+      return n+seg.join("");
+    }).join("｜");
+    if(orderF.length) S.push("🎒🌾 "+fmt(orderF,bagF));
+    if(orderL.length) S.push("🎒🐮 "+fmt(orderL,bagL));
   }
   // ---- 品評（開瓶戰報，參考類，擺尾）----
   const revs=[];
