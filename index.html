@@ -200,7 +200,8 @@ function parse(txt){
   const st=txt.match(/體力\s*\[(\d+)\/\d+\][\s\S]{0,20}?精力\s*\[(\d+)\/\d+\]/);
   if(st) S.push("🪴"+st[1]+" 🔋"+st[2]);
   // ---- 背包·農產品／畜牧品（參考類，擺尾）----
-  if(/🎒[^\n]*(?:農產品|畜牧品)/.test(txt)){
+  // 不要求背包標題行：品項行特徵夠強（📦/🍜＋｜），白名單守門，貼幾行都吃
+  {
     const bagF={}, orderF=[], bagL={}, orderL=[];
     const reBag=/(?:📦|🍜)\s*([^\n｜]+?)(?:\s*×\s*(\d+))?\s*｜/g;
     while((m=reBag.exec(txt))){
