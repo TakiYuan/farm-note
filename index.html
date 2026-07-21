@@ -201,6 +201,8 @@ function parse(txt){
     const G="✨良品", D="💎極品";
     if(sub.startsWith(G)){ subQ="✨"; sub=sub.slice(G.length); }
     else if(sub.startsWith(D)){ subQ="💎"; sub=sub.slice(D.length); }
+    else if(sub.startsWith("良品")){ subQ="✨"; sub=sub.slice(2); }
+    else if(sub.startsWith("極品")){ subQ="💎"; sub=sub.slice(2); }
     let hit=false;
     for(const k in SUB){ if(sub.includes(k)){ sub=SUB[k]; hit=true; break; } }
     if(!hit&&sub) sub=shortName((sub.match(/[一-龥]{2,10}/)||[])[0]||sub);
@@ -269,7 +271,10 @@ function parse(txt){
     let sub=(rc.match(/＋\s*([^・\n]+?)・/)||[])[1]||"純";
     sub=sub.trim();
     let subQ="";
-    if(sub.startsWith("良品")){ subQ="✨"; sub=sub.slice(2); }
+    const Gs="✨良品", Ds="💎極品";
+    if(sub.startsWith(Gs)){ subQ="✨"; sub=sub.slice(Gs.length); }
+    else if(sub.startsWith(Ds)){ subQ="💎"; sub=sub.slice(Ds.length); }
+    else if(sub.startsWith("良品")){ subQ="✨"; sub=sub.slice(2); }
     else if(sub.startsWith("極品")){ subQ="💎"; sub=sub.slice(2); }
     let hit=false;
     for(const k in SUB){ if(sub.includes(k)){ sub=SUB[k]; hit=true; break; } }
