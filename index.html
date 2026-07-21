@@ -164,7 +164,11 @@ function parse(txt){
       let watch="";
       if(gu.stock>=4) watch="咕董已滿倉🚨";
       else if(gu.stock===3&&gu.next) watch="咕董滿倉 ~"+fmtD(gu.next)+"⚠️";
-      else if(gu.next) watch="咕董第3顆 ~"+fmtD(new Date(gu.next.getTime()+(2-gu.stock)*CY))+"（警戒）";
+      else if(gu.next){
+        // 排班窗：第 3 顆（警戒）～第 4 顆（滿倉），這中間去收零損失
+        const t3=new Date(gu.next.getTime()+(2-gu.stock)*CY);
+        watch="咕董蛋窗"+fmtD(t3)+"~"+fmtD(new Date(t3.getTime()+CY));
+      }
       S.push("🐮 全員♥10"+(watch?"｜"+watch:"")+fedTxt);
     } else {
       S.push("🐮 "+an.join("｜")+fedTxt);
