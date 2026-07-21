@@ -77,6 +77,10 @@ function fmtT(y,mo,d,hm){
   if(diff===1) return "明"+hm;
   return (mo|0)+"/"+(d|0)+" "+hm;
 }
+function fmtD(t){
+  const hm=String(t.getHours()).padStart(2,"0")+":"+String(t.getMinutes()).padStart(2,"0");
+  return fmtT(t.getFullYear(),t.getMonth()+1,t.getDate(),hm);
+}
 function parse(txt){
   txt=txt.replace(/\*/g,"");  // 手機複製帶 md 粗體星號，進門先剝，各段不用自己防
   const S=[];
@@ -131,7 +135,7 @@ function parse(txt){
     S.push("🌱 "+fk.map(t=>t+" "+grp(fields[t])).join("｜"));
   }
   // ---- 牧場（動物愛心＋下一份）----
-  const an=[];
+  const an=[], herd=[];
   const reA=/名字：\*{0,2}([^*（(\n]+?)\*{0,2}（[^）]*）([\s\S]{0,400}?)(?=名字：|🌱\s|🎒\s|##|$)/g;
   while((m=reA.exec(txt))){
     const name=m[1].trim(), body=m[2];
@@ -139,9 +143,11 @@ function parse(txt){
     const hungry=/🥺|沒餵|餓/.test(body);
     const stock=body.match(/採收存貨｜\s*(\S+)\s*×\s*(\d+)/);
     const nx=body.match(/下一份\s*(\S+)\s*預計\s*(\d{4})\/(\d{2})\/(\d{2})\s*(\d{2}:\d{2})/);
+    herd.push({name,lv:lv?+lv:0,stock:stock?+stock[2]:0,
+      next:nx?new Date(+nx[2],+nx[3]-1,+nx[4],+nx[5].slice(0,2),+nx[5].slice(3)):null,hungry});
     let piece=name+(lv?"♥"+lv:"");
     if(stock&&+stock[2]>0){
-      piece+=" "+(PROD[stock[1]]||stock[1])+"×"+stock[2]+(+stock[2]>=3?"滿倉":"");
+      piece+=" "+(PROD[stock[1]]||stock[1])+"×"+stock[2]+(+stock[2]>=4?"滿倉":"");
     }
     if(nx){ piece+=" 下"+fmtT(nx[2],+nx[3],+nx[4],nx[5])+(stock&&+stock[2]>0?"":(PROD[nx[1]]||nx[1])); }
     if(hungry) piece+="🥺沒餵";
@@ -150,7 +156,20 @@ function parse(txt){
   const fed=txt.match(/吃飽的狀態管到\s*(\d{4})\/(\d{2})\/(\d{2})\s*(\d{2}:\d{2})/);
   const fed2=txt.match(/（(今天|明天)?\s*(\d{1,2}:\d{2})\s*後可以再餵）/);
   const fedTxt=fed?"｜🍽️餵到"+fmtT(fed[1],+fed[2],+fed[3],fed[4]):(fed2?"｜🍽️"+(fed2[1]==="明天"?"明":"")+fed2[2]+"後可餵":"");
-  if(an.length) S.push("🐮 "+an.join("｜")+fedTxt);
+  if(an.length){
+    // 排班模式：全員♥10 時收斂成一行，警戒線盯咕董（全場最快，3hr 一顆、4 顆滿倉，收成一次全收）
+    const gu=herd.find(a=>a.name==="咕董");
+    if(herd.every(a=>a.lv===10&&!a.hungry)&&gu){
+      const CY=3*3600*1000;  // 咕董蛋週期 3hr
+      let watch="";
+      if(gu.stock>=4) watch="咕董已滿倉🚨";
+      else if(gu.stock===3&&gu.next) watch="咕董滿倉 ~"+fmtD(gu.next)+"⚠️";
+      else if(gu.next) watch="咕董第3顆 ~"+fmtD(new Date(gu.next.getTime()+(2-gu.stock)*CY))+"（警戒）";
+      S.push("🐮 全員♥10"+(watch?"｜"+watch:"")+fedTxt);
+    } else {
+      S.push("🐮 "+an.join("｜")+fedTxt);
+    }
+  }
   // ---- 牧場收成 ----
   const rcMilk=[];
   const reC=/([一-龥]{2,6})\s*×\s*(\d+)\s*((?:（[^）]*）){1,2})/g;
