@@ -178,6 +178,7 @@ function parse(txt){
   const rcMilk=[];
   const reC=/([一-龥]{2,6})\s*×\s*(\d+)\s*((?:（[^）]*）){1,2})/g;
   while((m=reC.exec(txt))){
+    if(!LIVESTOCK[m[1]]) continue;  // 只認 LIVESTOCK 表的產品，跳過作物（同料疊分的誤觸）
     const parens=[...m[3].matchAll(/（([^）]*)）/g)].map(x=>x[1]);
     const animal=parens.find(p=>/^[一-龥]{1,6}$/.test(p));
     if(!animal) continue;
@@ -194,8 +195,12 @@ function parse(txt){
     const seg=txt.slice(m.index,m.index+260);
     if(!/發酵度|熟成|攪拌/.test(seg)) continue;
     const d=seg.match(/預計\s*(\d{4})\/(\d{2})\/(\d{2})\s*(\d{2}:\d{2})\s*熟成/);
-    let sub=m[3].trim(), mix=false;
-    if(sub.startsWith("×")){ mix=true; sub=sub.slice(1).trim(); }  // 混釀寫法：×副料（混釀）
+    let sub=m[3].trim(), mix=false, stack=0;
+    if(sub.startsWith("×")){
+      const stackM=sub.match(/^×\s*(\d+)\s*（同料疊分）/);
+      if(stackM){ stack=+stackM[1]; sub=""; }  // 同料疊分：葡萄×2🌕
+      else{ mix=true; sub=sub.slice(1).trim(); }  // 混釀：梅×稻🌙
+    }
     sub=sub.replace(/（混釀）/,"").trim();
     let subQ="";
     const G="✨良品", D="💎極品";
@@ -206,7 +211,7 @@ function parse(txt){
     let hit=false;
     for(const k in SUB){ if(sub.includes(k)){ sub=SUB[k]; hit=true; break; } }
     if(!hit&&sub) sub=shortName((sub.match(/[一-龥]{2,10}/)||[])[0]||sub);
-    brews.push(shortName(m[2])+(mix?"×":"+")+subQ+(sub||"純")+m[4]
+    brews.push(shortName(m[2])+(stack?"×"+stack:(mix?"×":"+")+subQ+(sub||"純"))+m[4]
       +(d?" "+fmtT(d[1],+d[2],+d[3],d[4]):"")
       +(/還沒攪拌/.test(seg)?"·未攪🥄":""));
   }
