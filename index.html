@@ -192,7 +192,8 @@ function parse(txt){
   const brews=[];
   const reW=/️⃣([^\n一-龥]{0,10})([一-龥]{2,10})\s*(?:＋\s*)?([^\n・]{0,16}?)・\s*(⚡|🌙|🌕)[^\n]{0,6}釀/g;
   while((m=reW.exec(txt))){
-    const seg=txt.slice(m.index,m.index+260);
+    const nextEntry=txt.indexOf("️⃣",m.index+m[0].length);
+    const seg=txt.slice(m.index,nextEntry>-1?nextEntry:m.index+260);
     if(!/發酵度|熟成|攪拌/.test(seg)) continue;
     const d=seg.match(/預計\s*(\d{4})\/(\d{2})\/(\d{2})\s*(\d{2}:\d{2})\s*熟成/);
     let sub=m[3].trim(), mix=false, stack=0;
