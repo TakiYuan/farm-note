@@ -273,17 +273,21 @@ function parse(txt){
     const rc=(seg.match(/[（(][^：:\n]*[：:]([^）)\n]+)[）)]/)||[])[1]||"";
     const [baseQ,baseRest]=splitQ(rc);
     const base=baseQ+shortName((baseRest.match(/[一-龥]{2,10}/)||[])[0]||"?");
-    let sub=(rc.match(/＋\s*([^・\n]+?)・/)||[])[1]||"純";
+    // 三種寫法：×N＝同料疊分（✨良品銀穗稻×2）／×作物＝混釀／＋副料＝一般
+    const stackM=rc.match(/×\s*(\d+)/);
+    const mixM=!stackM&&rc.match(/×\s*([^・\n（(]+)/);
+    let sub=(mixM?mixM[1]:(rc.match(/＋\s*([^・\n]+?)・/)||[])[1])||"純";
     let subQ;
     [subQ,sub]=splitQ(sub);
     let hit=false;
     for(const k in SUB){ if(sub.includes(k)){ sub=SUB[k]; hit=true; break; } }
     if(!hit) sub=shortName((sub.match(/[一-龥]{2,10}/)||[])[0]||sub);
     sub=subQ+sub;
+    const recipe=stackM?"×"+stackM[1]:(mixM?"×":"+")+sub;
     const per=/陳釀/.test(rc)?"🌕":(/慢釀/.test(rc)?"🌙":"⚡");
     const pei=(seg.match(/配方\s*(\d+)/)||[])[1];
     const price=(seg.match(/估價\s*([\d,]+)/)||[])[1];
-    revs.push((named?"📜"+wname+"! ":(wname?wname+"·":""))+base+"+"+sub+per+" "+m[1]+m[2][0]
+    revs.push((named?"📜"+wname+"! ":(wname?wname+"·":""))+base+recipe+per+" "+m[1]+m[2][0]
       +(pei?"(方"+pei+")":"")+(price?price+"元":""));
   }
   if(revs.length) S.push("🏅 "+revs.join("｜"));
