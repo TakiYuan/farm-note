@@ -39,6 +39,7 @@ jobs:
       - name: 發送到點的廣播
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          YUAN_TOKEN: ${{ secrets.YUAN_TOKEN }}
           LOOKAHEAD_MIN: ${{ github.event.inputs.lookahead_min || '75' }}
         run: python3 dispatch.py
 
